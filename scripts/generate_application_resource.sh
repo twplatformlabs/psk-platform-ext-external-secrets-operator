@@ -25,7 +25,7 @@ spec:
   sources:
     - repoURL: https://kubernetes-sigs.github.io/external-secrets-operator/
       chart: external-secrets-operator
-      targetRevision: $metrics_server_chart_version
+      targetRevision: $external_secrets_operator_chart_version
       helm:
         valueFiles:
           - \$config/roles/$cluster_role/external-secrets-operator/default-values.yaml
