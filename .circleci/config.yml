@@ -99,7 +99,7 @@ workflows:
 
   deploy production role configuration:
     jobs:
-      - update metrics-server deployment configuration:
+      - update external-secrets-operator deployment configuration:
           name: update production configuration
           context: *context
           cluster-role: production
