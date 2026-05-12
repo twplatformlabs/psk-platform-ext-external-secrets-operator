@@ -114,17 +114,17 @@ workflows:
   #           - update production configuration
   #         filters: *on-tag-main
 
-      - do/gh-release:
-          name: generate release notes
-          context: *context
-          notes-from-file: release.md
-          include-commit-msg: true
-          before-release:
-            - op/env:
-                env-file: op.prod-i01-aws-us-east-2.env
-          requires:
-            - test production clusters
-          filters: *on-tag-main
+      # - do/gh-release:
+      #     name: generate release notes
+      #     context: *context
+      #     notes-from-file: release.md
+      #     include-commit-msg: true
+      #     before-release:
+      #       - op/env:
+      #           env-file: op.prod-i01-aws-us-east-2.env
+      #     requires:
+      #       - test production clusters
+      #     filters: *on-tag-main
 
   #     - do/schedule-pipeline:
   #         name: schedule nightly integration tests
