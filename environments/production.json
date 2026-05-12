@@ -1,0 +1,4 @@
+{
+  "external_secrets_operator_chart_version": "2.2.0",
+  "argocd_namespace": "psk-system"
+}
