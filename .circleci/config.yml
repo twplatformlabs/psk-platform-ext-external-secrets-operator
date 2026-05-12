@@ -37,6 +37,20 @@ commands:
           op-value: platform/<< parameters.cluster>>/kubeconfig-base64
       - do/bash-functions
 
+  integration-test:
+    description: run integration test of external-secrets-operator
+    parameters:
+      cluster:
+        description: access cluster for testing
+        type: string
+      cluster-role:
+        description: cluster role to be tested
+        type: string
+    steps:
+      - run:
+          name: run integration test of external-secrets-operator
+          command: bash scripts/integration_tests.sh << parameters.cluster >> << parameters.cluster-role >>
+
 jobs:
 
   update external-secrets-operator deployment configuration:
@@ -57,23 +71,44 @@ jobs:
           destination: "roles/<<parameters.cluster-role>>/external-secrets-operator"
           repository-url: *config-repo
 
-  # functional-tests:
-  #   docker:
-  #     - image: *executor-image
-  #   parameters:
-  #     cluster:
-  #       description: cluster to test
-  #       type: string
-  #     cluster-role:
-  #       description: cluster role to be tested
-  #       type: string
-  #   steps:
-  #     - checkout
-  #     - set-environment:
-  #         cluster: << parameters.cluster >>
-  #     - run:
-  #         name: run integration test of metrics-server
-  #         command: bash scripts/integration_tests.sh << parameters.cluster >> << parameters.cluster-role >>
+  create platform-vault secret store:
+    docker:
+      - image: *executor-image
+    parameters:
+      cluster:
+        description: access cluster for testing
+        type: string
+      cluster-role:
+        description: cluster role to be tested
+        type: string
+    steps:
+      - checkout
+      - set-environment:
+          cluster: << parameters.cluster >>
+      - run:
+          name: create platform-vault secret store
+          command: bash scripts/set_admin_vault.sh << parameters.cluster-role >>
+      - run:
+          name: test external-secrets-operator functional health
+          command: bash scripts/integration_tests.sh << parameters.cluster >> << parameters.cluster-role >>
+
+  functional-tests:
+    docker:
+      - image: *executor-image
+    parameters:
+      cluster:
+        description: cluster to test
+        type: string
+      cluster-role:
+        description: cluster role to be tested
+        type: string
+    steps:
+      - checkout
+      - set-environment:
+          cluster: << parameters.cluster >>
+      - run:
+          name: run integration test of metrics-server
+          command: bash scripts/integration_tests.sh << parameters.cluster >> << parameters.cluster-role >>
 
 workflows:
 
@@ -88,14 +123,14 @@ workflows:
           cluster-role: sandbox
           filters: *on-push-main
 
-      # - functional-tests:
-      #     name: test sandbox clusters
-      #     context: *context
-      #     cluster: sbx-i01-aws-us-east-1
-      #     cluster-role: sandbox
-      #     requires:
-      #       - update sandbox configuration
-      #     filters: *on-push-main
+      - create platform-vault secret store:
+          name: create sandbox platform-vault secret store
+          context: *context
+          cluster: sbx-i01-aws-us-east-1
+          cluster-role: sandbox
+          requires:
+            - update sandbox configuration
+          filters: *on-push-main
 
   deploy production role configuration:
     jobs:
@@ -105,49 +140,51 @@ workflows:
           cluster-role: production
           filters: *on-tag-main
 
-  #     - functional-tests:
-  #         name: test production clusters
-  #         context: *context
-  #         cluster: prod-i01-aws-us-east-2
-  #         cluster-role: production
-  #         requires:
-  #           - update production configuration
-  #         filters: *on-tag-main
+      - create platform-vault secret store:
+          name: create production platform-vault secret store
+          context: *context
+          cluster: prod-i01-aws-us-east-2
+          cluster-role: production
+          requires:
+            - update production configuration
+          filters: *on-tag-main
 
-      # - do/gh-release:
-      #     name: generate release notes
-      #     context: *context
-      #     notes-from-file: release.md
-      #     include-commit-msg: true
-      #     before-release:
-      #       - op/env:
-      #           env-file: op.prod-i01-aws-us-east-2.env
-      #     requires:
-      #       - test production clusters
-      #     filters: *on-tag-main
+      - do/gh-release:
+          name: generate release notes
+          context: *context
+          notes-from-file: release.md
+          include-commit-msg: true
+          before-release:
+            - op/env:
+                env-file: op.prod-i01-aws-us-east-2.env
+          requires:
+            - create production platform-vault secret store
+          filters: *on-tag-main
 
-  #     - do/schedule-pipeline:
-  #         name: schedule nightly integration tests
-  #         context: *context
-  #         scheduled-pipeline-name: nightly metrics-server functional test
-  #         scheduled-pipeline-description: |
-  #           Automatically triggers nightly run of functional-tests job
-  #         hours-of-day: "[1]"
-  #         days-of-week: "[\"SUN\"]"
-  #         before-schedule:
-  #           - op/env:
-  #               env-file: op.prod-i01-aws-us-east-2.env
-  #         filters: *on-tag-main
+      - do/schedule-pipeline:
+          name: schedule nightly functional tests
+          context: *context
+          scheduled-pipeline-name: nightly external-secrets operator functional test
+          scheduled-pipeline-description: |
+            Automatically triggers nightly run of functional-test job
+          hours-of-day: "[1]"
+          days-of-week: "[\"SUN\"]"
+          before-schedule:
+            - op/env:
+                env-file: op.prod-i01-aws-us-east-2.env
+          filters: *on-tag-main
 
-  # run nightly integration test:
-  #   when:
-  #     equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
-  #   jobs:
-  #     - functional-tests:
-  #         name: nightly sbx-i01-aws-us-east-1 functional test
-  #         cluster: sbx-i01-aws-us-east-1
-  #         context: *context
-  #     - functional-tests:
-  #         name: nightly prod-i01-aws-us-east-2 functional test
-  #         cluster: prod-i01-aws-us-east-2
-  #         context: *context
+  run nightly integration test:
+    when:
+      equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+    jobs:
+      - functional-tests:
+          name: nightly sbx-i01-aws-us-east-1 functional test
+          cluster: sbx-i01-aws-us-east-1
+          cluster-role: sandbox
+          context: *context
+      - functional-tests:
+          name: nightly prod-i01-aws-us-east-2 functional test
+          cluster: prod-i01-aws-us-east-2
+          cluster-role: production
+          context: *context

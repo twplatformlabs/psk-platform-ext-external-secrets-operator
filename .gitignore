@@ -1,2 +1,5 @@
 kubeconfig
 deploy-templates/application.yaml
+deploy-files/
+test/*.yaml
+ss.yaml
