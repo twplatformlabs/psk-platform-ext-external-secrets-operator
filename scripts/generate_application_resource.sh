@@ -23,7 +23,7 @@ spec:
   project: psk-aws-control-plane-configuration
 
   sources:
-    - repoURL: https://charts.external-secrets.io/external-secrets/
+    - repoURL: https://charts.external-secrets.io/
       chart: external-secrets
       targetRevision: $external_secrets_operator_chart_version
       helm:
