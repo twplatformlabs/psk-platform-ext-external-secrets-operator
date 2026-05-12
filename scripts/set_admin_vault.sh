@@ -20,7 +20,7 @@ stringData:
   op-service-account-token: $OP_SERVICE_ACCOUNT_TOKEN
 
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ClusterSecretStore
 metadata:
   name: platform-vault
