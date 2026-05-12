@@ -20,7 +20,7 @@ TEST_FILES=("test-secret.yaml" "write-test-secret.yaml" "read-test-secret.yaml")
 cleanup() {
   echo "Deleting test files..."
   for f in "${TEST_FILES[@]}"; do
-    kubectl delete -f "$f" --ignore-not-found=true
+    kubectl delete -f "$f" -n "$argocd_namespace" --ignore-not-found=true
     echo "  removed: $f"
   done
 }
