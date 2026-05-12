@@ -43,7 +43,7 @@ kubectl apply -f test/test-secret.yaml
 
 # write the secret value to platform-vault
 cat <<EOF > test/write-test-secret.yaml
-apiVersion: external-secrets.io/v1alpha1
+apiVersion: external-secrets.io/v1
 kind: PushSecret
 metadata:
   name: push-test-secret
