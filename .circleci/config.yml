@@ -97,13 +97,13 @@ workflows:
       #       - update sandbox configuration
       #     filters: *on-push-main
 
-  # deploy production role configuration:
-  #   jobs:
-  #     - update metrics-server deployment configuration:
-  #         name: update production configuration
-  #         context: *context
-  #         cluster-role: production
-  #         filters: *on-tag-main
+  deploy production role configuration:
+    jobs:
+      - update metrics-server deployment configuration:
+          name: update production configuration
+          context: *context
+          cluster-role: production
+          filters: *on-tag-main
 
   #     - functional-tests:
   #         name: test production clusters
@@ -114,17 +114,17 @@ workflows:
   #           - update production configuration
   #         filters: *on-tag-main
 
-  #     - do/gh-release:
-  #         name: generate release notes
-  #         context: *context
-  #         notes-from-file: release.md
-  #         include-commit-msg: true
-  #         before-release:
-  #           - op/env:
-  #               env-file: op.prod-i01-aws-us-east-2.env
-  #         requires:
-  #           - test production clusters
-  #         filters: *on-tag-main
+      - do/gh-release:
+          name: generate release notes
+          context: *context
+          notes-from-file: release.md
+          include-commit-msg: true
+          before-release:
+            - op/env:
+                env-file: op.prod-i01-aws-us-east-2.env
+          requires:
+            - test production clusters
+          filters: *on-tag-main
 
   #     - do/schedule-pipeline:
   #         name: schedule nightly integration tests
