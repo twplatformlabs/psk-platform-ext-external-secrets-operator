@@ -1,0 +1,1 @@
+# psk-platform-ext-external-secrets-operator
